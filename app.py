@@ -25,7 +25,7 @@ logging.basicConfig(filename=logFilename,
                     level=logging.INFO)
 
 # Initialize MySQL
-mysql = MySQL(app, autocommit=False,
+mysql = MySQL(app, autocommit=True,
               cursorclass=pymysql.cursors.DictCursor)
 
 # Setup pyctuator monitor
@@ -78,7 +78,6 @@ def queryRecord():
     Query lock records
     '''
     keyword = request.form.get('keyword', '')
-    print(keyword)
     c = mysql.get_db().cursor()
     sql = 'SELECT * FROM lock_list WHERE account LIKE %s ORDER BY time DESC LIMIT %s;'
     result = []
@@ -94,11 +93,11 @@ def addRecord():
     '''
     Add lock records
     '''
-    account = request.args.get('account', None)
-    operation = request.args.get('operation', None)
-    timeString = request.args.get('time', None)
-    reason = request.args.get('reason', None)
-    source = request.args.get('source', 'MANUAL')
+    account = request.form.get('account', None)
+    operation = request.form.get('operation', None)
+    timeString = request.form.get('time', None)
+    reason = request.form.get('reason', None)
+    source = request.form.get('source', 'MANUAL')
 
     if timeString is not None:
         recordTime = datetime.datetime.strptime(timeString, '%Y-%m-%d %H:%M:%S')

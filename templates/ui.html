@@ -8,9 +8,11 @@
     <script src="/static/js/jquery-3.6.0.min.js"></script>
     <script src="/static/js/bootstrap.bundle.min.js"></script>
     <style>
-        #results {
+        #tab-content {
+            padding: 5px;
             height: 100%;
             overflow-y: scroll;
+            overflow-x: hidden;
         }
     </style>
 </head>
@@ -83,7 +85,7 @@
                 </div>
             )
         }
-        class App extends React.Component {
+        class SearchPanel extends React.Component {
             state = {
                 data: ['无数据']
             }
@@ -108,6 +110,141 @@
                         <SearchBox doSearch={this.doSearch} />
                         <div class="row" id="results">
                             <Table data={this.state.data} />
+                        </div>
+                    </div>
+                )
+            }
+        }
+        class AppendPanel extends React.Component {
+            state = {
+                total: 0,
+                success: 0,
+                fail: 0,
+                reason: '',
+                accountsText: '',
+                operation: 'LOCK',
+                date: '',
+                failedData: []
+            }
+            doSubmit = () => {
+                this.setState({
+                    failedData: [],
+                    success: 0,
+                    fail: 0
+                })
+                let lines = this.state.accountsText.split(/\r?\n/)
+                for (let index = 0; index < lines.length; index++) {
+                    const line = lines[index]
+                    const lineClean = line.trim()
+                    if (lineClean.length == 0) {
+                        continue
+                    }
+                    let time = this.state.date.trim()
+                    if (time.length <= 10) {
+                        time += ' 00:00:00'
+                    }
+                    setTimeout(() => $.post('/add', {
+                            account: lineClean,
+                            operation: this.state.operation,
+                            time: time,
+                            reason: this.state.reason
+                        }, (data) => {
+                            if (data.code == 0) {
+                                this.setState(prev => ({
+                                    success: prev.success + 1
+                                }))
+                            } else {
+                                this.setState(prev => ({
+                                    failedData: [...prev.failedData, lineClean],
+                                    fail: prev.fail + 1
+                                }))
+                            }
+                        }, 'json'), 100*index);
+                }
+            }
+            doClearInput = () => {
+                $('#opDate, #opReason, #opAccounts').val('')
+                $('#operation').val('LOCK')
+            }
+            countTotal = () => {
+                let newCount = 0
+                let text = this.state.accountsText
+                let lines = text.split(/\r?\n/)
+                for (let index = 0; index < lines.length; index++) {
+                    const line = lines[index]
+                    const lineClean = line.trim()
+                    if (lineClean.length > 0) {
+                        newCount += 1
+                    }
+                }
+                this.setState({total: newCount})
+            }
+            render() {
+                return (
+                    <div>
+                        <div className="row">
+                            <div class="col-md-4">
+                                <div className="mb-3">
+                                    <label for="opDate" className="form-label">操作日期</label>
+                                    <input className="form-control" type="text" id="opDate" placeholder="YYYY-mm-dd" onChange={() => this.setState({date: $('#opDate').val()})}/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div className="mb-3">
+                                    <label for="opReason" className="form-label">操作原因</label>
+                                    <input className="form-control" type="text" id="opReason" onChange={() => this.setState({reason: $('#opReason').val()})} />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div className="mb-3">
+                                    <label for="operation" className="form-label">操作类型</label>
+                                    <select className="form-control" type="text" id="operation"
+                                        onChange={() => this.setState({operation: $('#operation').val()})}>
+                                        <option value="LOCK">锁定</option>
+                                        <option value="UNLOCK">解锁</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="mb-3">
+                                <label for="opAccounts" className="col-12 form-label">账户列表</label>
+                                <textarea className="form-control" type="text" id="opAccounts"
+                                    onChange={() => {this.countTotal(); this.setState({accountsText: $('#opAccounts').val()})}}></textarea>
+                            </div>
+                        </div>
+                        
+                        <div className="row">
+                            <div className="mb-3 btn-group col-md-4">
+                                <button className="btn btn-primary" onClick={() => this.doSubmit()}>开始添加</button>
+                                <button className="btn btn-danger" onClick={() => this.doClearInput()}>清空输入</button>
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="form-label">
+                                待添加记录总数：<span>{this.state.total}</span>，成功<span>{this.state.success}</span>个，失败<span>{this.state.fail}</span>个<br/>
+                                添加失败的账户：<span>{this.state.failedData.join(', ')}</span>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        }
+        class App extends React.Component {
+            render() {
+                return (
+                    <div className="row">
+                        <div className="col-12">
+                            <ul className="nav nav-tabs" id="tabSelect" role="tablist">
+                                <li className="nav-item" role="presentation">
+                                    <a className="nav-link active" aria-current="page" href="#" data-bs-toggle="tab" data-bs-target="#search-panel" type="button" aria-controls="search-panel" aria-selected="true">记录查询</a>    
+                                </li>
+                                <li className="nav-item" role="presentation">
+                                    <a className="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#append-panel" type="button" aria-controls="append-panel" aria-selected="false">手动新增</a>    
+                                </li>
+                            </ul>
+                            <div className="tab-content" id="tab-content">
+                                <div className="tab-pane fade show active" id="search-panel" role="tabpanel" aria-labelledby="search-panel"><SearchPanel /></div>
+                                <div className="tab-pane fade" id="append-panel" role="tabpanel" aria-labelledby="append-panel"><AppendPanel /></div>
+                            </div>
                         </div>
                     </div>
                 )
