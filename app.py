@@ -14,7 +14,7 @@ from pyctuator.pyctuator import Pyctuator
 app = Flask(__name__)
 
 # Load parameters
-logPath = os.path.abspath(os.getenv('LOG_PATH', '/tmp'))
+logPath = os.path.abspath(os.path.join('.', 'logs'))
 app.config.from_json('config.json')
 ipWhitelist = [ipaddress.ip_network(x) for x in app.config['IP_WHITELIST'].split()]
 
