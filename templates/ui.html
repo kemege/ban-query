@@ -1,0 +1,119 @@
+<html>
+<head>
+    <title>BAN list query</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <script src="/static/js/react.production.min.js"></script>
+    <script src="/static/js/react-dom.production.min.js"></script>
+    <script src="/static/js/babel.min.js"></script>
+    <script src="/static/js/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <style>
+        #results {
+            height: 100%;
+            overflow-y: scroll;
+        }
+    </style>
+</head>
+<body>
+    <div id="root" class="container-fluid"></div>
+
+    <script type="text/babel">
+        const TableHeader = () => {
+            return (
+                <thead>
+                    <tr>
+                        <td>操作日期</td>
+                        <td>账户</td>
+                        <td>操作内容</td>
+                        <td>操作类型</td>
+                        <td>理由</td>
+                    </tr>
+                    
+                </thead>
+                )
+        }
+        const TableBody = (props) => {
+            const sourceMap = {
+                'MANUAL': '手动操作',
+                'AUTOMATIC': '自动'
+            }
+            const rows = props.data.map((row, index) => {
+                if (typeof(row) == 'object') {
+                    return (
+                        <tr>
+                            <td>{row.time}</td>
+                            <td>{row.account}</td>
+                            <td>{row.operation}</td>
+                            <td>{sourceMap[row.source]}</td>
+                            <td>{row.reason}</td>
+                        </tr>
+                    )
+                } else {
+                    return (
+                        <tr>
+                            <td colspan="5" className="text-center">{row}</td>
+                        </tr>
+                    )
+                }
+            })
+            return <tbody>{rows}</tbody>
+        }
+        const Table = (props) => {
+            const {data} = props
+            return (
+                <table className="table">
+                    <TableHeader />
+                    <TableBody data={data} />
+                </table>
+            )
+        }
+        const SearchBox = (props) => {
+            const {doSearch} = props;
+            return (
+                <div className="row">
+                    <div className="col-md-11 row">
+                        <label for="keyword" className="col-2">搜索关键字</label>
+                        <input type="text" id="keyword" className="col-10" />
+                    </div>
+                    <div className="col-md-1">
+                        <button className="btn btn-primary form-control" onClick={() => doSearch($('#keyword').val())}>
+                            搜索
+                        </button>
+                    </div>
+                </div>
+            )
+        }
+        class App extends React.Component {
+            state = {
+                data: ['无数据']
+            }
+            doSearch = (keyword) => {
+                var setState = this.setState
+                $.post('/query', {keyword: keyword}, (data) => {
+                    if (data.length > 0) {
+                        this.setState({
+                            data: data
+                        })
+                    } else {
+                        this.setState({
+                            data: ['没有搜索到' + escape(keyword) + '相关的结果']
+                        })
+                    }
+                }, 'json');
+                
+            }
+            render() {
+                return (
+                    <div className="col-12">
+                        <SearchBox doSearch={this.doSearch} />
+                        <div class="row" id="results">
+                            <Table data={this.state.data} />
+                        </div>
+                    </div>
+                )
+            }
+        }
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
