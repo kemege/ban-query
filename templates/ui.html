@@ -89,20 +89,19 @@
             state = {
                 data: ['无数据']
             }
-            doSearch = (keyword) => {
+            doSearch = async (keyword) => {
                 var setState = this.setState
-                $.post('/query', {keyword: keyword}, (data) => {
-                    if (data.length > 0) {
-                        this.setState({
-                            data: data
-                        })
-                    } else {
-                        this.setState({
-                            data: ['没有搜索到' + escape(keyword) + '相关的结果']
-                        })
-                    }
-                }, 'json');
-                
+                const text = await $.post('/query', {keyword: keyword})
+                let data = JSON.parse(text)
+                if (data.length > 0) {
+                    this.setState({
+                        data: data
+                    })
+                } else {
+                    this.setState({
+                        data: ['没有搜索到' + escape(keyword) + '相关的结果']
+                    })
+                }
             }
             render() {
                 return (
@@ -126,7 +125,7 @@
                 date: '',
                 failedData: []
             }
-            doSubmit = () => {
+            doSubmit = async () => {
                 this.setState({
                     failedData: [],
                     success: 0,
@@ -143,23 +142,23 @@
                     if (time.length <= 10) {
                         time += ' 00:00:00'
                     }
-                    setTimeout(() => $.post('/add', {
+                    const resultText = await $.post('/add', {
                             account: lineClean,
                             operation: this.state.operation,
                             time: time,
                             reason: this.state.reason
-                        }, (data) => {
-                            if (data.code == 0) {
-                                this.setState(prev => ({
-                                    success: prev.success + 1
-                                }))
-                            } else {
-                                this.setState(prev => ({
-                                    failedData: [...prev.failedData, lineClean],
-                                    fail: prev.fail + 1
-                                }))
-                            }
-                        }, 'json'), 100*index);
+                        })
+                    let data = JSON.parse(resultText)
+                    if (data.code == 0) {
+                        this.setState(prev => ({
+                            success: prev.success + 1
+                        }))
+                    } else {
+                        this.setState(prev => ({
+                            failedData: [...prev.failedData, lineClean],
+                            fail: prev.fail + 1
+                        }))
+                    }
                 }
             }
             doClearInput = () => {
