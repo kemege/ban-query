@@ -17,6 +17,7 @@ app = Flask(__name__)
 logPath = os.path.abspath(os.path.join('.', 'logs'))
 app.config.from_json('config.json')
 ipWhitelist = [ipaddress.ip_network(x) for x in app.config['IP_WHITELIST'].split()]
+ipWriteWhitelist = [ipaddress.ip_network(x) for x in app.config['IP_WRITE_WHITELIST'].split()]
 
 # Configure logging
 logFilename = os.path.join(logPath, 'log-%s.log' % datetime.date.today().isoformat())
@@ -40,7 +41,10 @@ Pyctuator(app, app.config['APP_NAME'], app_url=app.config['APP_URL'],
 def limitRemoteAddress():
     ipRemote = ipaddress.ip_address(request.remote_addr)
     passRequest = False
-    for w in ipWhitelist:
+    whitelist = ipWhitelist
+    if request.path in ['/add']:
+        whitelist = ipWriteWhitelist
+    for w in whitelist:
         if ipRemote in w:
             passRequest = True
     if not passRequest:
