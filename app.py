@@ -1,13 +1,16 @@
+from dataclasses import field
 import ipaddress
 import os
 import json
 import logging
 import datetime
-from flask import Flask, request, render_template, Blueprint, abort, send_from_directory
+import sys
+from flask import Flask, request, render_template, abort, send_from_directory
 from pyctuator.auth import BasicAuth
 from flaskext.mysql import MySQL
 import pymysql.cursors
 from pyctuator.pyctuator import Pyctuator
+import util
 
 
 # Initialize flask app
@@ -31,10 +34,14 @@ mysql = MySQL(app, autocommit=True,
 
 # Setup pyctuator monitor
 auth = BasicAuth(app.config['SBA_USER'], app.config['SBA_PASSWORD'])
-Pyctuator(app, app.config['APP_NAME'], app_url=app.config['APP_URL'],
-          pyctuator_endpoint_url=app.config['APP_ENDPOINT_URL'],
-          registration_url=app.config['SBA_URL'],
-          registration_auth=auth)
+pyctuator = Pyctuator(app, app.config['APP_NAME'], app_url=app.config['APP_URL'],
+                      pyctuator_endpoint_url=app.config['APP_ENDPOINT_URL'],
+                      registration_url=app.config['SBA_URL'],
+                      registration_auth=auth)
+buildInfo = util.getBuildInfo(sys.argv[0])
+gitInfo = util.getGitInfo()
+pyctuator.set_build_info(**buildInfo)
+pyctuator.set_git_info(**gitInfo)
 
 # IP whitelist limit
 @app.before_request
