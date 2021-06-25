@@ -14,7 +14,7 @@ def getBuildInfo(filename: str) -> dict:
         'time': fileDatetime
     }
 
-def getGitInfo(path: str) -> dict:
+def getGitInfo(path: str = '.') -> dict:
     repo = git.Repo(path)
     branch = repo.active_branch.name
     [commit] = list(repo.iter_commits(branch, max_count=1))
