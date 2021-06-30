@@ -1,7 +1,7 @@
 # ban-query
 Query of LOCK/UNLOCK records
 
-Based on `Flask` and `pymysql`
+Based on `Flask` and `pymysql`, support monitoring with `Spring Boot Admin` through `Pyctuator`
 
 Tested on Windows & Linux
 
