@@ -123,7 +123,7 @@ def addRecord():
             logging.info(f'User from {request.remote_addr} added {operation} record for user "{account}" with reason "{reason}"')
             result = {'code': 0}
         except Exception as ex:
-            logging.info(f'Exception encountered for request from {request.remote_addr}, content: ({account}, {operation}, {reason}), reason: {str(ex)}')
+            logging.error(f'Exception encountered for request from {request.remote_addr}, content: ({account}, {operation}, {reason}), reason: {str(ex)}')
             result = {'code': 2, 'reason': 'Exception encountered: ' + str(ex)}
 
     return json.dumps(result)
