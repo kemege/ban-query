@@ -227,6 +227,62 @@
                 )
             }
         }
+        const DateBox = (props) => {
+            const {name, id} = props;
+            return (
+                <div className="mb-3">
+                    <label for={id} className="form-label">{name}</label>
+                    <input type="date" id={id} name={id} className="form-control"/>
+                </div>)
+        }
+        class SummarizePanel extends React.Component {
+            generate = async () => {
+                let dateFrom = $('#summarize-from').val()
+                let dateTo = $('#summarize-to').val()
+                let text = ''
+                if (dateFrom === '' || dateTo === '') {
+                    $('#summarize-result').val('请先选择好日期范围')
+                }
+                const resultText = await $.post('/summarize', {
+                        from: dateFrom,
+                        to: dateTo
+                    })
+                let data = JSON.parse(resultText)
+                if (data.error == 0) {
+                    for (let i = 0; i < data.data.length; i++) {
+                        let time = new Date(data.data[i].date)
+                        text += (time.getMonth() + 1) + '月' + time.getDate() + '日' + '\n'
+                        text += data.data[i].names.map(x => x.replace('@fudan.edu.cn', '')).join(' ')
+                        text += '\n\n'
+                    }
+                } else {
+                    text = '获取记录时出现错误：' + data.reason
+                }
+                $('#summarize-result').val(text);
+            }
+            render() {
+                return (
+                    <div>
+                        <div className="row">
+                            <div className="col-md-5"><DateBox id="summarize-from" name="起始日期"/></div>
+                            <div className="col-md-5"><DateBox id="summarize-to" name="截止日期"/></div>
+                            <div className="col-md-2">
+                                <div className="mb-3">
+                                    <label className="form-label">&nbsp;</label>
+                                    <button id="summarize-generate" onClick={this.generate} className="btn btn-primary form-control" row="20">生成</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col"><label for="summarize-result" className="form-label">生成结果</label></div>
+                        </div>
+                        <div className="row">
+                            <div className="col"><textarea name="summarize-result" id="summarize-result" className="form-control"></textarea></div>
+                        </div>
+                    </div>
+                )
+            }
+        }
         class App extends React.Component {
             render() {
                 return (
@@ -239,10 +295,14 @@
                                 <li className="nav-item" role="presentation">
                                     <a className="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#append-panel" type="button" aria-controls="append-panel" aria-selected="false">手动新增</a>    
                                 </li>
+                                <li className="nav-item" role="presentation">
+                                    <a className="nav-link" href="#" data-bs-toggle="tab" data-bs-target="#summarize-panel" type="button" aria-controls="summarize-panel" aria-selected="false">封禁列表生成</a>    
+                                </li>
                             </ul>
                             <div className="tab-content" id="tab-content">
                                 <div className="tab-pane fade show active" id="search-panel" role="tabpanel" aria-labelledby="search-panel"><SearchPanel /></div>
                                 <div className="tab-pane fade" id="append-panel" role="tabpanel" aria-labelledby="append-panel"><AppendPanel /></div>
+                                <div className="tab-pane fade" id="summarize-panel" role="tabpanel" aria-labelledby="summarize-panel"><SummarizePanel /></div>
                             </div>
                         </div>
                     </div>

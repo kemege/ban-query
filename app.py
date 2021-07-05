@@ -5,6 +5,7 @@ import json
 import logging
 import datetime
 import sys
+import collections
 from flask import Flask, request, render_template, abort, send_from_directory
 from pyctuator.auth import BasicAuth
 from flaskext.mysql import MySQL
@@ -127,3 +128,40 @@ def addRecord():
             result = {'code': 2, 'reason': 'Exception encountered: ' + str(ex)}
 
     return json.dumps(result)
+
+@app.route('/summarize', methods=['POST'])
+def summarizeRecord():
+    '''
+    Summarize lock records
+    '''
+    dateFromStr = request.form.get('from', datetime.date.fromtimestamp(0).isoformat())
+    dateToStr = request.form.get('to', datetime.date.today().isoformat())
+    result = collections.OrderedDict()
+    dateFrom = datetime.datetime.strptime(dateFromStr, '%Y-%m-%d')
+    dateTo = datetime.datetime.strptime(dateToStr, '%Y-%m-%d') + datetime.timedelta(days=1)
+    reason = '发送垃圾邮件'
+    action = 'LOCK'
+    try:
+        c = mysql.get_db().cursor()
+        sql = ('SELECT account, time FROM lock_list '
+               'WHERE time >= %s AND time <= %s '
+               'AND reason = %s AND operation = %s AND hide = 0 '
+               'ORDER BY time DESC')
+        c.execute(sql, (dateFrom, dateTo, reason, action))
+        for row in c:
+            date = row['time'].date()
+            name = row['account']
+            try:
+                result[date].append(name)
+            except:
+                result[date] = [name]
+        return json.dumps({
+            'error': 0,
+            'data': [{'date': k, 'names': v} for k, v in result.items()]
+        }, default=str)
+    except Exception as ex:
+        logging.error(f'Exception encountered while summarizing from {request.remote_addr}, date range: ({dateFromStr}, {dateToStr}), reason: {str(ex)}')
+        return json.dumps({
+            'error': 1,
+            'reason': str(ex)
+        })
