@@ -39,14 +39,21 @@
                 'MANUAL': '手动操作',
                 'AUTOMATIC': '自动'
             }
+            const operationMap = {
+                'LOCK': '锁定',
+                'UNLOCK': '解锁',
+                'UNLOCK_2W': '临时解锁(2周)',
+                'FREEZE': '冻结',
+                'STOP': '禁用',
+            }
             const rows = props.data.map((row, index) => {
                 if (typeof(row) == 'object') {
                     return (
                         <tr>
                             <td>{row.time}</td>
                             <td>{row.account}</td>
-                            <td>{row.operation}</td>
-                            <td>{sourceMap[row.source]}</td>
+                            <td>{operationMap[row.operation] || row.operation}</td>
+                            <td>{sourceMap[row.source] || row.source}</td>
                             <td>{row.reason}</td>
                         </tr>
                     )
@@ -201,6 +208,8 @@
                                         onChange={() => this.setState({operation: $('#operation').val()})}>
                                         <option value="LOCK">锁定</option>
                                         <option value="UNLOCK">解锁</option>
+                                        <option value="UNLOCK_2W">临时解锁(2周)</option>
+                                        <option value="FREEZE">冻结</option>
                                     </select>
                                 </div>
                             </div>
